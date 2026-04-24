@@ -344,6 +344,31 @@ export function GameApp() {
     return <main className="app-shell"><section className="game-area"><div className="puzzle-panel"><div className="board-shell centered-copy"><strong>Carregando estado da arena...</strong></div></div></section></main>;
   }
 
+  if (self?.status === "waiting") {
+    return (
+      <main className="app-shell queue-app-shell">
+        <section className="queue-screen" aria-labelledby="queue-title">
+          <div className="queue-screen__glow" aria-hidden="true" />
+          <div className="queue-screen__content">
+            <img className="queue-logo" src="/assets/image-206.png" alt="" aria-hidden="true" />
+            <div className="queue-copy">
+              <h1 id="queue-title">A GINCANA JÁ VAI COMEÇAR!</h1>
+              <p>Estamos esperando que todos os policiais entrem na gincana. Em breve, iremos começar. Prepare-se a batalha pelos prêmios será brutal!</p>
+            </div>
+            <div className="queue-crowd" aria-live="polite">
+              {(bootstrap?.waitingPlayers ?? []).map((player) => (
+                <article key={player.id} className="queue-avatar">
+                  <img src={player.avatarUrl} alt={player.nickname} />
+                  <span>{player.nickname}</span>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <>
       {!self && (
@@ -418,21 +443,7 @@ export function GameApp() {
               </div>
             </div>
 
-            {self?.status === "waiting" && (
-              <div className="board-shell centered-copy waiting-shell">
-                <div className="waiting-card">
-                  <p className="kicker">Fila de espera</p>
-                  <h2>Aguardando liberação</h2>
-                  <p>Seu nick já está na fila. Quando um treinador liberar o jogo, a rodada começa com contagem regressiva sincronizada.</p>
-                  <div className="waiting-stats">
-                    <span>Na fila agora</span>
-                    <strong>{bootstrap?.waitingPlayers.length ?? 0}</strong>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {self && self.status !== "waiting" && (
+            {self && (
               <>
                 <div className="board-shell board-grid-shell">
                   <div className="board-stage">

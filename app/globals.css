@@ -1119,12 +1119,6 @@ h2 {
   min-height: 420px;
 }
 
-.waiting-shell {
-  place-items: center;
-  padding: 28px;
-}
-
-.waiting-card,
 .round-hero {
   width: min(540px, 100%);
   border: 1px solid rgba(143, 18, 23, 0.72);
@@ -1134,34 +1128,14 @@ h2 {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.waiting-card h2,
-.round-hero h2 {
+.round-hero {
   margin: 0 0 10px;
 }
 
-.waiting-card p,
 .round-hero p {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
-}
-
-.waiting-stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(143, 18, 23, 0.52);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.68rem;
-  font-weight: 900;
-}
-
-.waiting-stats strong {
-  color: #fff;
-  font-size: 1rem;
 }
 
 .board-grid-shell,
@@ -1289,9 +1263,124 @@ h2 {
 .live-row strong,
 .ranking-name,
 .player-card strong,
-.waiting-card p,
 .round-hero p {
   word-break: break-word;
+}
+
+.queue-app-shell {
+  width: min(1600px, calc(100vw - 72px));
+  display: grid;
+  place-items: center;
+  padding: 32px 0 40px;
+}
+
+.queue-screen {
+  position: relative;
+  display: grid;
+  min-height: calc(100vh - 72px);
+  width: 100%;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(228, 53, 60, 0.28), transparent 32%),
+    radial-gradient(circle at 12% 22%, rgba(255, 255, 255, 0.06), transparent 22%),
+    radial-gradient(circle at 88% 70%, rgba(163, 14, 22, 0.28), transparent 28%),
+    linear-gradient(180deg, rgba(15, 1, 2, 0.82), rgba(10, 1, 2, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.queue-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 28%),
+    linear-gradient(315deg, rgba(255, 255, 255, 0.02), transparent 26%);
+  backdrop-filter: blur(18px);
+}
+
+.queue-screen__glow {
+  position: absolute;
+  inset: 12% 18%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(226, 41, 48, 0.18), transparent 62%);
+  filter: blur(36px);
+  pointer-events: none;
+}
+
+.queue-screen__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+  width: min(1120px, calc(100% - 48px));
+  text-align: center;
+}
+
+.queue-logo {
+  width: clamp(90px, 12vw, 132px);
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.34));
+}
+
+.queue-copy {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.queue-copy h1 {
+  margin: 0;
+  color: #fff5f5;
+  font-size: clamp(2rem, 4.3vw, 3.9rem);
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.queue-copy p {
+  margin: 0;
+  color: rgba(255, 235, 236, 0.88);
+  font-size: clamp(1rem, 1.5vw, 1.22rem);
+  line-height: 1.75;
+  text-wrap: balance;
+}
+
+.queue-crowd {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 18px 14px;
+  width: 100%;
+  max-width: 980px;
+  align-items: start;
+}
+
+.queue-avatar {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.queue-avatar img {
+  width: 54px;
+  height: 64px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.34));
+}
+
+.queue-avatar span {
+  max-width: 100%;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .admin-game-area {
@@ -1444,11 +1533,6 @@ h2 {
     padding: 8px;
   }
 
-  .waiting-shell {
-    padding: 14px;
-  }
-
-  .waiting-card,
   .round-hero {
     padding: 16px;
   }
@@ -1485,6 +1569,39 @@ h2 {
     width: 26px;
     height: 26px;
     font-size: 0.74rem;
+  }
+
+  .queue-app-shell {
+    width: min(100vw - 24px, 1600px);
+    padding: 12px 0 20px;
+  }
+
+  .queue-screen {
+    min-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
+
+  .queue-screen__content {
+    width: min(100%, calc(100% - 24px));
+    gap: 18px;
+  }
+
+  .queue-copy {
+    gap: 10px;
+  }
+
+  .queue-crowd {
+    grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+    gap: 14px 10px;
+  }
+
+  .queue-avatar img {
+    width: 48px;
+    height: 58px;
+  }
+
+  .queue-avatar span {
+    font-size: 0.76rem;
   }
 }
 
