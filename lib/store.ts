@@ -61,6 +61,7 @@ export interface Store {
   createAdminSession(nickname: string, password: string): Promise<{ session: SessionView; token: string }>;
   bootstrap(playerToken: string | null, adminToken: string | null): Promise<BootstrapPayload>;
   releaseAll(adminToken: string): Promise<RoundView>;
+  resetGame(): Promise<BootstrapPayload>;
   updateProgress(playerToken: string, payload: ProgressPayload): Promise<BootstrapPayload>;
   finishGame(playerToken: string, payload: FinishPayload): Promise<BootstrapPayload>;
 }
@@ -324,6 +325,13 @@ function createMemoryStore(): Store {
         });
       });
       return toBootstrap(memoryState, null).currentRound as RoundView;
+    },
+    async resetGame() {
+      memoryState.roundPlayers = [];
+      memoryState.rounds = [];
+      memoryState.rankings = [];
+      memoryState.sessions = [];
+      return toBootstrap(memoryState, null);
     },
     async updateProgress(playerToken, payload) {
       const session = findSessionByToken(memoryState, playerToken, "player");
@@ -668,6 +676,15 @@ function createPrismaStore(): Store {
         finishedAt: round.finishedAt?.toISOString() ?? null,
         participants: round.participants.map(toRoundPlayerView),
       };
+    },
+    async resetGame() {
+      await prisma.$transaction(async (tx) => {
+        await tx.roundPlayer.deleteMany({});
+        await tx.appSession.deleteMany({});
+        await tx.gameRound.deleteMany({});
+        await tx.rankingEntry.deleteMany({});
+      });
+      return buildPrismaBootstrap(null, null);
     },
     async updateProgress(playerToken, payload) {
       await syncPrismaState();

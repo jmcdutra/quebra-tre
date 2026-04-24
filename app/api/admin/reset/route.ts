@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { buildAdminAuthChallenge, isValidAdminBasicAuth } from "@/lib/admin-auth";
 import { getStore } from "@/lib/store";
+import { buildAdminAuthChallenge, isValidAdminBasicAuth } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   if (!isValidAdminBasicAuth(request.headers.get("authorization"))) {
@@ -8,10 +8,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const round = await getStore().releaseAll("");
-    return NextResponse.json({ ok: true, round });
+    const bootstrap = await getStore().resetGame();
+    return NextResponse.json({ ok: true, bootstrap });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Não foi possível liberar a fila.";
+    const message = error instanceof Error ? error.message : "Não foi possível resetar o jogo.";
     return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }
 }

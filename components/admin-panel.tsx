@@ -15,6 +15,7 @@ export function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [releaseState, setReleaseState] = useState<"idle" | "loading">("idle");
+  const [resetState, setResetState] = useState<"idle" | "loading">("idle");
 
   const loadBootstrap = useCallback(async () => {
     const response = await fetch("/api/bootstrap", { cache: "no-store" });
@@ -46,6 +47,20 @@ export function AdminPanel() {
     await loadBootstrap();
   };
 
+  const handleReset = async () => {
+    setResetState("loading");
+    setError("");
+    const response = await fetch("/api/admin/reset", { method: "POST" });
+    const result = await response.json();
+    if (!response.ok) {
+      setError(result.error || "Falha ao resetar o jogo.");
+      setResetState("idle");
+      return;
+    }
+    setResetState("idle");
+    await loadBootstrap();
+  };
+
   if (loading) {
     return <main className="app-shell"><section className="game-area"><div className="puzzle-panel"><div className="board-shell centered-copy"><strong>Carregando painel...</strong></div></div></section></main>;
   }
@@ -72,7 +87,10 @@ export function AdminPanel() {
           <div className="status-row admin-status-row">
             <div className="metric"><svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4Zm0 7h16v2H4v-2Zm0 7h16v2H4v-2Z"/></svg><strong>{bootstrap?.waitingPlayers.length ?? 0} na fila</strong></div>
             <div className="metric"><svg viewBox="0 0 24 24"><path d="M12 2 5 9h4v6h6V9h4l-7-7Z"/></svg><strong>{bootstrap?.onlinePlayers.length ?? 0} jogadores online</strong></div>
-            <div className="tool-buttons"><button className="ranking-button" type="button" onClick={handleRelease} disabled={releaseState === "loading"}>{releaseState === "loading" ? "Liberando..." : "Liberar todos"}</button></div>
+            <div className="tool-buttons admin-tool-buttons">
+              <button className="ranking-button" type="button" onClick={handleRelease} disabled={releaseState === "loading" || resetState === "loading"}>{releaseState === "loading" ? "Liberando..." : "Liberar todos"}</button>
+              <button className="ranking-button ranking-button--danger" type="button" onClick={handleReset} disabled={resetState === "loading" || releaseState === "loading"}>{resetState === "loading" ? "Resetando..." : "Resetar jogo"}</button>
+            </div>
           </div>
 
           <div className="board-shell admin-board-grid">
@@ -80,7 +98,7 @@ export function AdminPanel() {
               <div className="tray-heading"><strong>Fila de espera</strong><span>Quem entra agora aguarda aqui</span></div>
               <div className="live-leaderboard admin-list-scroll">
                 {(bootstrap?.waitingPlayers ?? []).length === 0 ? <div className="ranking-empty">Sem jogadores aguardando.</div> : (bootstrap?.waitingPlayers ?? []).map((player) => (
-                  <article key={player.id} className="live-row"><img src={player.avatarUrl} alt={player.nickname} /><div><strong>{player.nickname}</strong><span>Esperando próxima largada</span></div></article>
+                  <article key={player.id} className="live-row admin-waiting-row"><img src={player.avatarUrl} alt={player.nickname} /><div><strong>{player.nickname}</strong><span>Esperando próxima largada</span></div></article>
                 ))}
               </div>
             </section>
@@ -92,7 +110,7 @@ export function AdminPanel() {
                   <>
                     <p className="kicker">Arena em andamento</p>
                     <h2>{bootstrap.currentRound.status === "countdown" ? "Contagem regressiva" : "Corrida ao vivo"}</h2>
-                    <p>{bootstrap.currentRound.status === "countdown" ? "Os jogadores liberados já receberam a contagem sincronizada." : "Acompanhe o avanço e a ordem de chegada em tempo real."}</p>
+                    <p>{bootstrap.currentRound.status === "countdown" ? "Os jogadores liberados já receberam a contagem sincronizada." : "Os jogadores estão jogando!"}</p>
                   </>
                 ) : (
                   <>

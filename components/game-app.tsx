@@ -48,6 +48,18 @@ function getPuzzleImage(levelNumber: number) {
   return `/assets/puzzle-${levelNumber}.png`;
 }
 
+const FALLING_GIFTS = Array.from({ length: 20 }, (_, index) => ({
+  id: `gift-${index}`,
+  left: `${(index * 4.9 + (index % 4) * 7) % 94}%`,
+  duration: `${8.5 + (index % 5) * 1.25}s`,
+  delay: `${(index % 6) * -1.35}s`,
+  drift: `${(index % 2 === 0 ? 1 : -1) * (18 + (index % 5) * 10)}px`,
+  driftMid: `${(index % 2 === 0 ? -1 : 1) * (10 + (index % 4) * 8)}px`,
+  rotation: `${(index % 2 === 0 ? 1 : -1) * (110 + (index % 5) * 28)}deg`,
+  scale: (0.72 + (index % 4) * 0.1).toFixed(2),
+  opacity: (0.22 + (index % 5) * 0.08).toFixed(2),
+}));
+
 function getPieceStyle(piece: number, cols: number, rows: number, levelNumber: number): CSSProperties {
   const x = ((piece % cols) / Math.max(1, cols - 1)) * 100;
   const y = ((Math.floor(piece / cols)) / Math.max(1, rows - 1)) * 100;
@@ -76,6 +88,7 @@ export function GameApp() {
   const [finishModal, setFinishModal] = useState<{ title: string; stats: string; action: string; disabled?: boolean } | null>(null);
   const [nowTick, setNowTick] = useState(() => performance.now());
   const [progressMessage, setProgressMessage] = useState("Arraste ou toque para encaixar");
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const syncSentRef = useRef(0);
   const finishSentRef = useRef(false);
 
@@ -103,6 +116,14 @@ export function GameApp() {
   useEffect(() => {
     const interval = window.setInterval(() => setNowTick(performance.now()), 250);
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1180px)");
+    const syncLayout = () => setIsCompactLayout(mediaQuery.matches);
+    syncLayout();
+    mediaQuery.addEventListener("change", syncLayout);
+    return () => mediaQuery.removeEventListener("change", syncLayout);
   }, []);
 
   const startLevel = useCallback((index: number) => {
@@ -339,21 +360,108 @@ export function GameApp() {
   const onlinePlayers = bootstrap?.onlinePlayers ?? [];
   const correctPieces = slots.reduce<number>((sum, piece, index) => sum + (piece === index ? 1 : 0), 0);
   const rankingItems = useMemo(() => (bootstrap?.rankings ?? []).slice(0, 10), [bootstrap?.rankings]);
+  const liveLeaderboard = (
+    <aside className="live-sidebar">
+      <div className="tray-heading leaderboard-heading">
+        <strong>Corrida ao vivo</strong>
+        <span>{currentRound?.status === "countdown" ? "Contagem ativa" : "Posições em tempo real"}</span>
+      </div>
+      <div className="live-leaderboard">
+        {(currentRound?.participants ?? []).map((player, index) => (
+          <article key={player.sessionId} className={`live-row ${player.sessionId === self?.id ? "is-self" : ""}`}>
+            <span className="ranking-position mini">{getPlacementLabel(player, index)}</span>
+            <img src={player.avatarUrl} alt={player.nickname} />
+            <div>
+              <strong>{player.nickname}</strong>
+              <span>{player.isFinished ? `Finalizou em ${formatTime(player.elapsedMs)}` : `${player.levelsCompleted}/${TOTAL_LEVELS} fases • ${Math.round(player.progressPercent)}%`}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </aside>
+  );
 
   if (loading) {
     return <main className="app-shell"><section className="game-area"><div className="puzzle-panel"><div className="board-shell centered-copy"><strong>Carregando estado da arena...</strong></div></div></section></main>;
   }
 
-  if (self?.status === "waiting") {
+  if (!self) {
     return (
       <main className="app-shell queue-app-shell">
         <section className="queue-screen" aria-labelledby="queue-title">
-          <div className="queue-screen__glow" aria-hidden="true" />
+          <div className="queue-gifts" aria-hidden="true">
+            {FALLING_GIFTS.map((gift) => (
+              <img
+                key={gift.id}
+                className="queue-gift"
+                src="/assets/hc_gift_31days_icon.png"
+                alt=""
+                style={{
+                  ["--gift-left" as string]: gift.left,
+                  ["--gift-duration" as string]: gift.duration,
+                  ["--gift-delay" as string]: gift.delay,
+                  ["--gift-drift" as string]: gift.drift,
+                  ["--gift-drift-mid" as string]: gift.driftMid,
+                  ["--gift-rotation" as string]: gift.rotation,
+                  ["--gift-scale" as string]: gift.scale,
+                  ["--gift-opacity" as string]: gift.opacity,
+                }}
+              />
+            ))}
+          </div>
+          <div className="queue-screen__content">
+            <section className="start-dialog queue-start-dialog" aria-labelledby="startTitle">
+              <div className="start-brand" aria-hidden="true">
+                <img src="/assets/image-206.png" alt="" />
+                <p>Companhia dos Treinadores</p>
+                <strong>Quebra</strong>
+                <span>Cabecas</span>
+              </div>
+              <div className="start-form">
+                <label className="start-name" htmlFor="startName">
+                  <span className="sr-only">Nickname do jogador</span>
+                  <img src={getHabboAvatarUrl(nickname || "Habbo")} alt="" aria-hidden="true" />
+                  <input id="startName" type="text" maxLength={24} autoComplete="nickname" placeholder="Seu nickname" value={nickname} onChange={(event) => setNickname(cleanNickname(event.target.value))} onKeyDown={(event) => event.key === "Enter" ? handleLogin() : undefined} />
+                </label>
+                <p className="form-error">{authError}</p>
+                <button className="primary-button wide" type="button" onClick={handleLogin}>Confirmar nickname</button>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (self.status === "waiting") {
+    return (
+      <main className="app-shell queue-app-shell">
+        <section className="queue-screen" aria-labelledby="queue-title">
+          <div className="queue-gifts" aria-hidden="true">
+            {FALLING_GIFTS.map((gift) => (
+              <img
+                key={gift.id}
+                className="queue-gift"
+                src="/assets/hc_gift_31days_icon.png"
+                alt=""
+                style={{
+                  ["--gift-left" as string]: gift.left,
+                  ["--gift-duration" as string]: gift.duration,
+                  ["--gift-delay" as string]: gift.delay,
+                  ["--gift-drift" as string]: gift.drift,
+                  ["--gift-drift-mid" as string]: gift.driftMid,
+                  ["--gift-rotation" as string]: gift.rotation,
+                  ["--gift-scale" as string]: gift.scale,
+                  ["--gift-opacity" as string]: gift.opacity,
+                }}
+              />
+            ))}
+          </div>
           <div className="queue-screen__content">
             <img className="queue-logo" src="/assets/image-206.png" alt="" aria-hidden="true" />
             <div className="queue-copy">
-              <h1 id="queue-title">A GINCANA JÁ VAI COMEÇAR!</h1>
-              <p>Estamos esperando que todos os policiais entrem na gincana. Em breve, iremos começar. Prepare-se a batalha pelos prêmios será brutal!</p>
+              <h1 id="queue-title">A <span>GINCANA</span> JA VAI COMECAR!</h1>
+              <p>Estamos esperando que todos os policiais entrem na gincana. Em breve, iremos começar. Prepare-se, a batalha pelos prêmios será brutal!</p>
             </div>
             <div className="queue-crowd" aria-live="polite">
               {(bootstrap?.waitingPlayers ?? []).map((player) => (
@@ -371,28 +479,6 @@ export function GameApp() {
 
   return (
     <>
-      {!self && (
-        <div className="modal-backdrop start-backdrop">
-          <section className="start-dialog" role="dialog" aria-modal="true" aria-labelledby="startTitle">
-            <div className="start-brand" aria-hidden="true">
-              <img src="/assets/image-206.png" alt="" />
-              <p>Companhia dos Treinadores</p>
-              <strong>Quebra</strong>
-              <span>Cabeças</span>
-            </div>
-            <div className="start-form">
-              <label className="start-name" htmlFor="startName">
-                <span className="sr-only">Nickname do jogador</span>
-                <img src={getHabboAvatarUrl(nickname || "Habbo")} alt="" aria-hidden="true" />
-                <input id="startName" type="text" maxLength={24} autoComplete="nickname" placeholder="Seu nickname" value={nickname} onChange={(event) => setNickname(cleanNickname(event.target.value))} onKeyDown={(event) => event.key === "Enter" ? handleLogin() : undefined} />
-              </label>
-              <p className="form-error">{authError}</p>
-              <button className="primary-button wide" type="button" onClick={handleLogin}>Confirmar nickname</button>
-            </div>
-          </section>
-        </div>
-      )}
-
       <main className="app-shell">
         <section className="game-area" aria-labelledby="game-title">
           <header className="topbar">
@@ -420,7 +506,7 @@ export function GameApp() {
                 <img src="/assets/image-206.png" alt="" aria-hidden="true" />
                 <div>
                   <h1 id="game-title">Quebra</h1>
-                  <span>Cabeças</span>
+                  <span>Cabecas</span>
                 </div>
               </div>
             </div>
@@ -469,7 +555,7 @@ export function GameApp() {
                             {piece !== null && (
                               <button
                                 type="button"
-                                className={`piece ${piece === slotIndex ? "is-correct" : ""} ${selectedPiece?.pieceIndex === piece ? "is-selected" : ""}`}
+                                className={`piece piece--board ${piece === slotIndex ? "is-correct" : ""} ${selectedPiece?.pieceIndex === piece ? "is-selected" : ""}`}
                                 draggable={phase === "playing"}
                                 onDragStart={() => setDraggedPiece({ pieceIndex: piece, from: { area: "slot", slotIndex } })}
                                 onDragEnd={() => setDraggedPiece(null)}
@@ -486,24 +572,7 @@ export function GameApp() {
                     </div>
                   </div>
 
-                  <aside className="live-sidebar">
-                    <div className="tray-heading leaderboard-heading">
-                      <strong>Corrida ao vivo</strong>
-                      <span>{currentRound?.status === "countdown" ? "Contagem ativa" : "Posições em tempo real"}</span>
-                    </div>
-                    <div className="live-leaderboard">
-                      {(currentRound?.participants ?? []).map((player, index) => (
-                        <article key={player.sessionId} className={`live-row ${player.sessionId === self.id ? "is-self" : ""}`}>
-                          <span className="ranking-position mini">{getPlacementLabel(player, index)}</span>
-                          <img src={player.avatarUrl} alt={player.nickname} />
-                          <div>
-                            <strong>{player.nickname}</strong>
-                            <span>{player.isFinished ? `Finalizou em ${formatTime(player.elapsedMs)}` : `${player.levelsCompleted}/${TOTAL_LEVELS} fases • ${Math.round(player.progressPercent)}%`}</span>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </aside>
+                  {!isCompactLayout && liveLeaderboard}
                 </div>
 
                 <div className="tray-block multi-tray-block">
@@ -517,7 +586,7 @@ export function GameApp() {
                         <button
                           key={piece}
                           type="button"
-                          className={`piece ${selectedPiece?.pieceIndex === piece ? "is-selected" : ""}`}
+                          className={`piece piece--tray ${selectedPiece?.pieceIndex === piece ? "is-selected" : ""}`}
                           draggable={phase === "playing"}
                           onDragStart={() => setDraggedPiece({ pieceIndex: piece, from: { area: "tray" } })}
                           onDragEnd={() => setDraggedPiece(null)}
@@ -527,6 +596,8 @@ export function GameApp() {
                       ))}
                     </div>
                   </div>
+
+                  {isCompactLayout && liveLeaderboard}
 
                   <div className="tray-panel podium-panel">
                     <div className="tray-heading"><strong>Pódio geral</strong><span>Melhores campanhas</span></div>
