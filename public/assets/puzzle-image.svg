@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" role="img" aria-labelledby="title desc">
+  <title id="title">Ilustracao para quebra-cabecas</title>
+  <desc id="desc">Paisagem colorida com farol, trilha, rio, casas e montanhas.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8ed6f1"/>
+      <stop offset="1" stop-color="#fff4bf"/>
+    </linearGradient>
+    <linearGradient id="river" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5bb9d7"/>
+      <stop offset="1" stop-color="#2e78bd"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#202125" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="800" fill="url(#sky)"/>
+  <circle cx="1065" cy="124" r="62" fill="#f7c948"/>
+  <circle cx="1065" cy="124" r="86" fill="none" stroke="#ffe98a" stroke-width="18" opacity="0.65"/>
+
+  <path d="M0 338 116 238l105 70 126-142 139 136 101-92 98 76 132-137 150 158 109-93 204 130v456H0Z" fill="#476a88"/>
+  <path d="M0 392 164 271l87 66 85-86 143 151 96-101 116 111 125-123 142 139 89-73 233 151v294H0Z" fill="#5f8f6e"/>
+  <path d="M0 458c115-36 230-37 344 1s215 42 340 4c128-39 254-38 381 3 82 26 154 36 215 29v305H0Z" fill="#2f8f6f"/>
+  <path d="M0 557c154-40 270-41 411-2 146 41 293 42 440 1 144-39 283-39 429 0v244H0Z" fill="#68b65f"/>
+
+  <path d="M467 800c54-82 86-156 102-223 16-70 33-117 53-143 21-27 45-33 72-18 32 17 55 61 71 133 16 73 40 157 72 251Z" fill="url(#river)" opacity="0.94"/>
+  <path d="M588 458c-29 68-44 143-52 224" fill="none" stroke="#b7ecff" stroke-width="9" stroke-linecap="round" opacity="0.6"/>
+  <path d="M720 476c34 74 54 184 71 324" fill="none" stroke="#b7ecff" stroke-width="8" stroke-linecap="round" opacity="0.42"/>
+
+  <g filter="url(#softShadow)">
+    <path d="M166 505h164v142H166Z" fill="#f8f3e7"/>
+    <path d="m145 505 103-86 103 86Z" fill="#e85d4f"/>
+    <path d="M207 552h48v95h-48Z" fill="#3662ad"/>
+    <path d="M276 552h31v31h-31Z" fill="#f0bd3d"/>
+    <path d="M177 552h31v31h-31Z" fill="#f0bd3d"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <path d="M892 455h178v166H892Z" fill="#fff8da"/>
+    <path d="m871 456 110-92 111 92Z" fill="#257a63"/>
+    <path d="M934 528h54v93h-54Z" fill="#e85d4f"/>
+    <path d="M1009 513h35v35h-35Z" fill="#376ed4"/>
+    <path d="M904 513h35v35h-35Z" fill="#376ed4"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <path d="M672 232h88v278h-88Z" fill="#fff6e0"/>
+    <path d="M660 232h112l-14-54h-84Z" fill="#e85d4f"/>
+    <rect x="691" y="273" width="50" height="50" rx="25" fill="#376ed4"/>
+    <path d="M683 340h66v170h-66Z" fill="#f4d06f"/>
+    <path d="M642 178h148v24H642Z" fill="#202125"/>
+  </g>
+
+  <path d="M380 800c39-66 97-111 173-135 78-25 161-22 249 10 58 22 104 25 139 10 33-14 55-43 66-88" fill="none" stroke="#f5d16c" stroke-width="42" stroke-linecap="round" opacity="0.95"/>
+  <path d="M380 800c39-66 97-111 173-135 78-25 161-22 249 10 58 22 104 25 139 10 33-14 55-43 66-88" fill="none" stroke="#fff7c9" stroke-width="16" stroke-linecap="round" opacity="0.8"/>
+
+  <g fill="#202125" opacity="0.75">
+    <path d="M152 219c29-31 59-31 88 0-31-14-59-14-88 0Z"/>
+    <path d="M315 183c24-24 47-24 70 0-25-11-48-11-70 0Z"/>
+    <path d="M1090 272c31-28 62-28 93 0-33-12-64-12-93 0Z"/>
+  </g>
+
+  <g fill="#f7f8f4" opacity="0.95">
+    <ellipse cx="185" cy="116" rx="62" ry="22"/>
+    <ellipse cx="238" cy="113" rx="50" ry="18"/>
+    <ellipse cx="924" cy="200" rx="72" ry="24"/>
+    <ellipse cx="985" cy="197" rx="54" ry="19"/>
+    <ellipse cx="502" cy="106" rx="58" ry="18"/>
+    <ellipse cx="552" cy="103" rx="42" ry="15"/>
+  </g>
+</svg>

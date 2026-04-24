@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionRole {
+  player
+  admin
+}
+
+enum SessionStatus {
+  waiting
+  countdown
+  playing
+  finished
+  offline
+}
+
+enum RoundStatus {
+  countdown
+  live
+  finished
+}
+
+model AppSession {
+  id            String        @id @default(cuid())
+  sessionToken  String        @unique
+  nickname      String
+  role          SessionRole
+  status        SessionStatus @default(waiting)
+  avatarUrl     String
+  connectedAt   DateTime      @default(now())
+  lastSeenAt    DateTime      @default(now())
+  currentRoundId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  currentRound  GameRound?    @relation(fields: [currentRoundId], references: [id])
+  roundPlayers  RoundPlayer[]
+
+  @@index([nickname, role])
+  @@index([lastSeenAt])
+}
+
+model GameRound {
+  id                String        @id @default(cuid())
+  status            RoundStatus
+  countdownStartsAt DateTime
+  startsAt          DateTime
+  finishedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  sessions          AppSession[]
+  participants      RoundPlayer[]
+}
+
+model RoundPlayer {
+  id              String      @id @default(cuid())
+  roundId         String
+  sessionId       String
+  nickname        String
+  avatarUrl       String
+  progressPercent Float       @default(0)
+  levelsCompleted Int         @default(0)
+  currentLevel    Int         @default(1)
+  totalMoves      Int         @default(0)
+  elapsedMs       Int         @default(0)
+  isFinished      Boolean     @default(false)
+  placement       Int?
+  finishedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  round           GameRound   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  session         AppSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, sessionId])
+  @@index([roundId])
+}
+
+model RankingEntry {
+  id          String   @id @default(cuid())
+  nickname    String
+  avatarUrl   String
+  totalTimeMs Int
+  totalMoves  Int
+  totalPieces Int
+  levels      Int
+  finishedAt  DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([totalTimeMs, totalMoves])
+}
+
+model AdminEvent {
+  id         String   @id @default(cuid())
+  adminNick  String
+  action     String
+  payload    Json?
+  createdAt  DateTime @default(now())
+}

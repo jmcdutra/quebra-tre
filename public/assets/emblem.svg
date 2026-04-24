@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+  <title id="title">Emblema Quebra Cabecas</title>
+  <rect x="25" y="9" width="70" height="15" fill="#202020"/>
+  <rect x="18" y="25" width="84" height="8" fill="#474747"/>
+  <path d="M23 35h74v32c0 20-14 34-37 43-23-9-37-23-37-43V35Z" fill="#2b2b2b"/>
+  <path d="M29 41h62v25c0 16-11 28-31 36-20-8-31-20-31-36V41Z" fill="#111"/>
+  <path d="M34 44h52v19c0 14-9 24-26 31-17-7-26-17-26-31V44Z" fill="#b10016"/>
+  <path d="M60 19 73 41 69 50l-9-12-9 12-4-9 13-22Z" fill="#f1f1f1"/>
+  <path d="M43 35c-12 2-20 10-23 25l10 4c2-9 7-15 16-17l-3-12Zm34 0 3 12c9 2 14 8 16 17l10-4c-3-15-11-23-23-25h-6Z" fill="#e8e8e8"/>
+  <path d="M33 62h13v28H33V62Zm41 0h13v28H74V62Z" fill="#d6d6d6"/>
+  <path d="M40 54h10v43H40V54Zm30 0h10v43H70V54Z" fill="#303030"/>
+  <path d="M54 49h12v55H54V49Z" fill="#c8c8c8"/>
+  <path d="M51 54h18v8H51v-8Zm0 16h18v8H51v-8Zm0 16h18v8H51v-8Z" fill="#73000d"/>
+  <path d="M19 58h12v28H19V58Zm70 0h12v28H89V58Z" fill="#f6f6f6"/>
+  <path d="M14 64h13v14H14V64Zm79 0h13v14H93V64Z" fill="#b10016"/>
+</svg>
