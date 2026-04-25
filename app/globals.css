@@ -1374,6 +1374,18 @@ h2 {
 
 .queue-start-dialog {
   justify-items: center;
+  width: min(470px, calc(100% - 20px));
+  min-width: 0;
+}
+
+.queue-start-dialog .start-form,
+.queue-start-dialog .start-name,
+.queue-start-dialog .start-name input {
+  min-width: 0;
+}
+
+.queue-start-dialog .start-name input {
+  box-sizing: border-box;
 }
 
 .queue-copy {
@@ -1490,6 +1502,14 @@ h2 {
   white-space: nowrap;
 }
 
+.admin-top-online .online-list {
+  display: none;
+}
+
+.admin-player-card {
+  min-height: 64px;
+}
+
 .admin-start-dialog .start-form {
   gap: 10px;
 }
@@ -1569,6 +1589,26 @@ h2 {
     text-align: center;
   }
 
+  .admin-topbar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .admin-top-online,
+  .admin-player-card {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-player-card {
+    gap: 8px;
+    min-height: 52px;
+  }
+
+  .admin-player-card strong {
+    font-size: 0.8rem;
+  }
+
   .status-row,
   .admin-status-row {
     grid-template-columns: 1fr;
@@ -1601,6 +1641,10 @@ h2 {
     min-height: 280px;
   }
 
+  .slot {
+    min-height: 40px;
+  }
+
   .tray-block {
     padding: 0 10px 10px;
   }
@@ -1613,6 +1657,11 @@ h2 {
     grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
     gap: 6px;
     padding: 8px;
+  }
+
+  .piece,
+  .pieces-tray .piece {
+    min-height: 52px;
   }
 
   .round-hero {
@@ -1667,6 +1716,19 @@ h2 {
     gap: 18px;
   }
 
+  .queue-start-dialog {
+    width: min(100%, calc(100% - 8px));
+  }
+
+  .queue-start-dialog .start-form {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .queue-start-dialog .start-name input {
+    padding-right: 12px;
+  }
+
   .queue-copy {
     gap: 10px;
   }
@@ -1718,6 +1780,26 @@ h2 {
 
   .puzzle-board {
     min-height: 220px;
+  }
+
+  .pieces-tray {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  }
+
+  .queue-start-dialog {
+    width: 100%;
+  }
+
+  .queue-start-dialog .start-form {
+    padding: 10px;
+  }
+
+  .admin-topbar {
+    gap: 6px;
+  }
+
+  .admin-player-card strong {
+    display: none;
   }
 
   .pieces-tray {

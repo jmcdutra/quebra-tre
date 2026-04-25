@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Quebra Cabeças",
-  description: "Arena de quebra-cabeças com fila, largada sincronizada, pódio e painel admin em tempo real.",
+  title: "[TRE] Gincana (Quebra Cabeças)",
+  description: "Gincana da Companhia dos Treinadores",
 };
 
 export default function RootLayout({

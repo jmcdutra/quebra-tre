@@ -311,9 +311,13 @@ export function GameApp() {
       setProgressMessage("Arraste ou toque para encaixar");
       return;
     }
+    if (selectedPiece) {
+      movePiece(selectedPiece.pieceIndex, selectedPiece.from, from);
+      return;
+    }
     setSelectedPiece({ pieceIndex, from });
     setProgressMessage("Toque em uma casa para encaixar");
-  }, [phase, selectedPiece]);
+  }, [movePiece, phase, selectedPiece]);
 
   const handleSlotClick = useCallback((slotIndex: number) => {
     if (!selectedPiece) return;

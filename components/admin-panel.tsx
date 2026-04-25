@@ -68,8 +68,8 @@ export function AdminPanel() {
   return (
     <main className="app-shell">
       <section className="game-area admin-game-area">
-        <header className="topbar">
-          <section className="top-online" aria-label="Painel aberto">
+        <header className="topbar admin-topbar">
+          <section className="top-online admin-top-online" aria-label="Painel aberto">
             <div className="online-title"><span>Tre3</span><strong>Livre</strong></div>
             <div className="online-list"></div>
           </section>
@@ -80,7 +80,7 @@ export function AdminPanel() {
               <div><h1>Tre3</h1><span>Controle</span></div>
             </div>
           </div>
-          <div className="player-card"><strong>Painel aberto</strong><img src="/assets/image-206.png" alt="Painel aberto" /></div>
+          <div className="player-card admin-player-card"><strong>Painel aberto</strong><img src="/assets/image-206.png" alt="Painel aberto" /></div>
         </header>
 
         <section className="puzzle-panel admin-panel-shell">
