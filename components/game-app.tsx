@@ -44,8 +44,7 @@ function getPlacementLabel(player: RoundParticipantView, index: number) {
 }
 
 function getPuzzleImage(levelNumber: number) {
-  if (levelNumber === 1) return "/assets/puzzle-image.svg";
-  return `/assets/puzzle-${levelNumber}.png`;
+  return `/assets/puzzle-${levelNumber}.jpg`;
 }
 
 const FALLING_GIFTS = Array.from({ length: 20 }, (_, index) => ({
