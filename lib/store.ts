@@ -50,6 +50,7 @@ interface RoundPlayerRecord extends RoundParticipantView {
 }
 
 interface MemoryState {
+  gameActive: boolean;
   sessions: SessionRecord[];
   rounds: RoundRecord[];
   roundPlayers: RoundPlayerRecord[];
@@ -60,13 +61,15 @@ export interface Store {
   createPlayerSession(nickname: string): Promise<{ session: SessionView; token: string }>;
   createAdminSession(nickname: string, password: string): Promise<{ session: SessionView; token: string }>;
   bootstrap(playerToken: string | null, adminToken: string | null): Promise<BootstrapPayload>;
-  releaseAll(adminToken: string): Promise<RoundView>;
+  toggleGameActive(): Promise<BootstrapPayload>;
   resetGame(): Promise<BootstrapPayload>;
+  leavePlayerSession(playerToken: string): Promise<void>;
   updateProgress(playerToken: string, payload: ProgressPayload): Promise<BootstrapPayload>;
   finishGame(playerToken: string, payload: FinishPayload): Promise<BootstrapPayload>;
 }
 
 const memoryState: MemoryState = {
+  gameActive: false,
   sessions: [],
   rounds: [],
   roundPlayers: [],
@@ -211,8 +214,61 @@ function toBootstrap(state: MemoryState, self: SessionRecord | null): BootstrapP
         }
       : null,
     rankings: [...state.rankings].sort(compareRankings).slice(0, 25),
+    gameActive: state.gameActive,
     now: isoNow(),
   };
+}
+
+function buildLiveMemoryRound(state: MemoryState) {
+  const current = getCurrentRoundFromMemory(state);
+  if (current && current.status !== "finished") {
+    if (current.status === "countdown") {
+      current.status = "live";
+      current.countdownStartsAt = isoNow();
+      current.startsAt = isoNow();
+    }
+    return current;
+  }
+
+  const round: RoundRecord = {
+    id: crypto.randomUUID(),
+    status: "live",
+    countdownStartsAt: isoNow(),
+    startsAt: isoNow(),
+    finishedAt: null,
+  };
+  state.rounds.push(round);
+  return round;
+}
+
+function attachMemoryPlayerToRound(state: MemoryState, session: SessionRecord, round: RoundRecord) {
+  session.currentRoundId = round.id;
+  session.status = "playing";
+
+  const existing = state.roundPlayers.find((item) => item.roundId === round.id && item.sessionId === session.id);
+  if (existing) {
+    existing.nickname = session.nickname;
+    existing.avatarUrl = session.avatarUrl;
+    existing.isFinished = false;
+    existing.finishedAt = null;
+    existing.placement = null;
+    return;
+  }
+
+  state.roundPlayers.push({
+    roundId: round.id,
+    sessionId: session.id,
+    nickname: session.nickname,
+    avatarUrl: session.avatarUrl,
+    progressPercent: 0,
+    levelsCompleted: 0,
+    currentLevel: 1,
+    totalMoves: 0,
+    elapsedMs: 0,
+    isFinished: false,
+    placement: null,
+    finishedAt: null,
+  });
 }
 
 function assertAdminPassword(password: string) {
@@ -263,10 +319,18 @@ function createMemoryStore(): Store {
         active.sessionToken = hashSessionToken(token);
         active.lastSeenAt = isoNow();
         active.avatarUrl = getHabboAvatarUrl(clean);
+        if (memoryState.gameActive && !active.currentRoundId) {
+          const round = buildLiveMemoryRound(memoryState);
+          attachMemoryPlayerToRound(memoryState, active, round);
+        }
         return { session: active, token };
       }
       const session = buildSession("player", clean);
       session.sessionToken = hashSessionToken(token);
+      if (memoryState.gameActive) {
+        const round = buildLiveMemoryRound(memoryState);
+        attachMemoryPlayerToRound(memoryState, session, round);
+      }
       memoryState.sessions.push(session);
       return { session, token };
     },
@@ -292,46 +356,33 @@ function createMemoryStore(): Store {
       const admin = findSessionByToken(memoryState, adminToken, "admin");
       return toBootstrap(memoryState, player ?? admin);
     },
-    async releaseAll() {
+    async toggleGameActive() {
       syncMemoryState(memoryState);
-      const waitingPlayers = memoryState.sessions.filter((session) => session.role === "player" && isActiveSession(session) && !session.currentRoundId && session.status !== "finished");
-      if (waitingPlayers.length === 0) throw new Error("Não há jogadores na fila para liberar.");
-      const countdownStartsAt = now();
-      const startsAt = new Date(countdownStartsAt.getTime() + COUNTDOWN_MS);
-      const round: RoundRecord = {
-        id: crypto.randomUUID(),
-        status: "countdown",
-        countdownStartsAt: countdownStartsAt.toISOString(),
-        startsAt: startsAt.toISOString(),
-        finishedAt: null,
-      };
-      memoryState.rounds.push(round);
-      waitingPlayers.forEach((session) => {
-        session.currentRoundId = round.id;
-        session.status = "countdown";
-        memoryState.roundPlayers.push({
-          roundId: round.id,
-          sessionId: session.id,
-          nickname: session.nickname,
-          avatarUrl: session.avatarUrl,
-          progressPercent: 0,
-          levelsCompleted: 0,
-          currentLevel: 1,
-          totalMoves: 0,
-          elapsedMs: 0,
-          isFinished: false,
-          placement: null,
-          finishedAt: null,
-        });
-      });
-      return toBootstrap(memoryState, null).currentRound as RoundView;
+      memoryState.gameActive = !memoryState.gameActive;
+      if (memoryState.gameActive) {
+        const round = buildLiveMemoryRound(memoryState);
+        const waitingPlayers = memoryState.sessions.filter((session) => session.role === "player" && isActiveSession(session) && !session.currentRoundId);
+        waitingPlayers.forEach((session) => attachMemoryPlayerToRound(memoryState, session, round));
+      }
+      return toBootstrap(memoryState, null);
     },
     async resetGame() {
+      memoryState.gameActive = false;
       memoryState.roundPlayers = [];
       memoryState.rounds = [];
       memoryState.rankings = [];
       memoryState.sessions = [];
       return toBootstrap(memoryState, null);
+    },
+    async leavePlayerSession(playerToken) {
+      const hashed = hashSessionToken(playerToken);
+      const session = memoryState.sessions.find((item) => item.sessionToken === hashed && item.role === "player");
+      if (!session) return;
+      if (session.currentRoundId) {
+        memoryState.roundPlayers = memoryState.roundPlayers.filter((item) => !(item.roundId === session.currentRoundId && item.sessionId === session.id));
+      }
+      memoryState.sessions = memoryState.sessions.filter((item) => item.id !== session.id);
+      syncMemoryState(memoryState);
     },
     async updateProgress(playerToken, payload) {
       const session = findSessionByToken(memoryState, playerToken, "player");
@@ -525,10 +576,14 @@ async function getPrismaSelf(playerToken: string | null, adminToken: string | nu
 
 async function buildPrismaBootstrap(playerToken: string | null, adminToken: string | null): Promise<BootstrapPayload> {
   const self = await getPrismaSelf(playerToken, adminToken);
-  const [sessions, rankingEntries, currentRound] = await Promise.all([
+  const [sessions, rankingEntries, currentRound, gameActiveEvent] = await Promise.all([
     prisma.appSession.findMany({ orderBy: { lastSeenAt: "desc" } }),
     prisma.rankingEntry.findMany({ orderBy: [{ totalTimeMs: "asc" }, { totalMoves: "asc" }], take: 25 }),
     getCurrentRoundPrisma(),
+    prisma.adminEvent.findFirst({
+      where: { action: { in: ["game_activated", "game_deactivated"] } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const activeSessions = sessions.filter((session) => Date.now() - session.lastSeenAt.getTime() < SESSION_TTL_MS + HEARTBEAT_GRACE_MS && session.status !== "offline");
@@ -556,8 +611,73 @@ async function buildPrismaBootstrap(playerToken: string | null, adminToken: stri
         }
       : null,
     rankings: rankingEntries.map(toRankingView),
+    gameActive: gameActiveEvent?.action === "game_activated",
     now: isoNow(),
   };
+}
+
+async function getPrismaGameActive() {
+  const event = await prisma.adminEvent.findFirst({
+    where: { action: { in: ["game_activated", "game_deactivated"] } },
+    orderBy: { createdAt: "desc" },
+  });
+  return event?.action === "game_activated";
+}
+
+async function buildLivePrismaRound() {
+  const current = await prisma.gameRound.findFirst({
+    where: { status: { in: ["countdown", "live"] } },
+    orderBy: { countdownStartsAt: "desc" },
+  });
+
+  if (current) {
+    if (current.status === "countdown") {
+      return prisma.gameRound.update({
+        where: { id: current.id },
+        data: {
+          status: "live",
+          countdownStartsAt: new Date(),
+          startsAt: new Date(),
+        },
+      });
+    }
+    return current;
+  }
+
+  return prisma.gameRound.create({
+    data: {
+      status: "live",
+      countdownStartsAt: new Date(),
+      startsAt: new Date(),
+    },
+  });
+}
+
+async function attachPrismaPlayerToRound(session: { id: string; nickname: string; avatarUrl: string }, roundId: string) {
+  await prisma.roundPlayer.upsert({
+    where: { roundId_sessionId: { roundId, sessionId: session.id } },
+    update: {
+      nickname: session.nickname,
+      avatarUrl: session.avatarUrl,
+      isFinished: false,
+      finishedAt: null,
+      placement: null,
+    },
+    create: {
+      roundId,
+      sessionId: session.id,
+      nickname: session.nickname,
+      avatarUrl: session.avatarUrl,
+    },
+  });
+
+  await prisma.appSession.update({
+    where: { id: session.id },
+    data: {
+      currentRoundId: roundId,
+      status: "playing",
+    },
+  });
 }
 
 function createPrismaStore(): Store {
@@ -566,6 +686,7 @@ function createPrismaStore(): Store {
       const clean = cleanNickname(nickname);
       if (!clean) throw new Error("Informe um nickname válido.");
       await syncPrismaState();
+      const gameActive = await getPrismaGameActive();
       const existing = await prisma.appSession.findFirst({
         where: {
           role: "player",
@@ -584,6 +705,11 @@ function createPrismaStore(): Store {
             avatarUrl: getHabboAvatarUrl(clean),
           },
         });
+        if (gameActive && !session.currentRoundId) {
+          const round = await buildLivePrismaRound();
+          await attachPrismaPlayerToRound(session, round.id);
+          return { session: toSessionView({ ...session, currentRoundId: round.id, status: "playing" }), token };
+        }
         return { session: toSessionView(session), token };
       }
       const session = await prisma.appSession.create({
@@ -595,6 +721,11 @@ function createPrismaStore(): Store {
           avatarUrl: getHabboAvatarUrl(clean),
         },
       });
+      if (gameActive) {
+        const round = await buildLivePrismaRound();
+        await attachPrismaPlayerToRound(session, round.id);
+        return { session: toSessionView({ ...session, currentRoundId: round.id, status: "playing" }), token };
+      }
       return { session: toSessionView(session), token };
     },
     async createAdminSession(nickname, password) {
@@ -636,46 +767,31 @@ function createPrismaStore(): Store {
     async bootstrap(playerToken, adminToken) {
       return buildPrismaBootstrap(playerToken, adminToken);
     },
-    async releaseAll() {
+    async toggleGameActive() {
       await syncPrismaState();
-      const waitingPlayers = await prisma.appSession.findMany({
-        where: {
-          role: "player",
-          currentRoundId: null,
-          status: { in: ["waiting", "finished"] },
-          lastSeenAt: { gte: new Date(Date.now() - SESSION_TTL_MS) },
-        },
-      });
-      if (waitingPlayers.length === 0) throw new Error("Não há jogadores na fila para liberar.");
-      const countdownStartsAt = new Date();
-      const startsAt = new Date(countdownStartsAt.getTime() + COUNTDOWN_MS);
-      const round = await prisma.gameRound.create({
+      const active = await getPrismaGameActive();
+      const nextActive = !active;
+      await prisma.adminEvent.create({
         data: {
-          status: "countdown",
-          countdownStartsAt,
-          startsAt,
-          participants: {
-            create: waitingPlayers.map((player) => ({
-              sessionId: player.id,
-              nickname: player.nickname,
-              avatarUrl: player.avatarUrl,
-            })),
-          },
+          adminNick: "Treinadores",
+          action: nextActive ? "game_activated" : "game_deactivated",
         },
-        include: { participants: true },
       });
-      await prisma.appSession.updateMany({
-        where: { id: { in: waitingPlayers.map((player) => player.id) } },
-        data: { currentRoundId: round.id, status: "countdown" },
-      });
-      return {
-        id: round.id,
-        status: round.status,
-        countdownStartsAt: round.countdownStartsAt.toISOString(),
-        startsAt: round.startsAt.toISOString(),
-        finishedAt: round.finishedAt?.toISOString() ?? null,
-        participants: round.participants.map(toRoundPlayerView),
-      };
+      if (nextActive) {
+        const round = await buildLivePrismaRound();
+        const waitingPlayers = await prisma.appSession.findMany({
+          where: {
+            role: "player",
+            currentRoundId: null,
+            lastSeenAt: { gte: new Date(Date.now() - SESSION_TTL_MS) },
+            status: { not: "offline" },
+          },
+        });
+        for (const player of waitingPlayers) {
+          await attachPrismaPlayerToRound(player, round.id);
+        }
+      }
+      return buildPrismaBootstrap(null, null);
     },
     async resetGame() {
       await prisma.$transaction(async (tx) => {
@@ -683,8 +799,23 @@ function createPrismaStore(): Store {
         await tx.appSession.deleteMany({});
         await tx.gameRound.deleteMany({});
         await tx.rankingEntry.deleteMany({});
+        await tx.adminEvent.create({
+          data: {
+            adminNick: "Treinadores",
+            action: "game_deactivated",
+          },
+        });
       });
       return buildPrismaBootstrap(null, null);
+    },
+    async leavePlayerSession(playerToken) {
+      const session = await prisma.appSession.findUnique({ where: { sessionToken: hashSessionToken(playerToken) } });
+      if (!session || session.role !== "player") return;
+      await prisma.$transaction(async (tx) => {
+        await tx.roundPlayer.deleteMany({ where: { sessionId: session.id } });
+        await tx.appSession.delete({ where: { id: session.id } });
+      });
+      await syncPrismaState();
     },
     async updateProgress(playerToken, payload) {
       await syncPrismaState();

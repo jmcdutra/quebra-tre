@@ -8,10 +8,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const round = await getStore().releaseAll("");
-    return NextResponse.json({ ok: true, round });
+    const bootstrap = await getStore().toggleGameActive();
+    return NextResponse.json({ ok: true, bootstrap });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Não foi possível liberar a fila.";
+    const message = error instanceof Error ? error.message : "Não foi possível alterar o estado do jogo.";
     return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }
 }

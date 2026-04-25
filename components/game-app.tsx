@@ -360,6 +360,23 @@ export function GameApp() {
     await loadBootstrap();
   };
 
+  const handleLeaveQueue = async () => {
+    await fetch("/api/session/player/logout", { method: "POST" });
+    setAuthError("");
+    setNickname("");
+    setSelectedPiece(null);
+    setDraggedPiece(null);
+    setCampaignMoves(0);
+    setCampaignElapsedMs(0);
+    setLevelMoves(0);
+    setLevelSnapshotElapsedMs(0);
+    setLevelStartAt(null);
+    setSlots([]);
+    setTray([]);
+    finishSentRef.current = false;
+    await loadBootstrap();
+  };
+
   const onlinePlayers = bootstrap?.onlinePlayers ?? [];
   const correctPieces = slots.reduce<number>((sum, piece, index) => sum + (piece === index ? 1 : 0), 0);
   const rankingItems = useMemo(() => (bootstrap?.rankings ?? []).slice(0, 10), [bootstrap?.rankings]);
@@ -465,6 +482,9 @@ export function GameApp() {
             <div className="queue-copy">
               <h1 id="queue-title">A <span>GINCANA</span> JA VAI COMECAR!</h1>
               <p>Estamos esperando que todos os policiais entrem na gincana. Em breve, iremos começar. Prepare-se, a batalha pelos prêmios será brutal!</p>
+            </div>
+            <div className="queue-actions">
+              <button className="secondary-button queue-leave-button" type="button" onClick={handleLeaveQueue}>Sair da fila</button>
             </div>
             <div className="queue-crowd" aria-live="polite">
               {(bootstrap?.waitingPlayers ?? []).map((player) => (

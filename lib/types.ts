@@ -54,6 +54,7 @@ export interface BootstrapPayload {
   waitingPlayers: SessionView[];
   currentRound: RoundView | null;
   rankings: RankingEntryView[];
+  gameActive: boolean;
   now: string;
 }
 

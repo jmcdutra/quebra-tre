@@ -39,7 +39,7 @@ export function AdminPanel() {
     const response = await fetch("/api/admin/release-all", { method: "POST" });
     const result = await response.json();
     if (!response.ok) {
-      setError(result.error || "Falha ao liberar fila.");
+      setError(result.error || "Falha ao alterar estado do jogo.");
       setReleaseState("idle");
       return;
     }
@@ -88,7 +88,7 @@ export function AdminPanel() {
             <div className="metric"><svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4Zm0 7h16v2H4v-2Zm0 7h16v2H4v-2Z"/></svg><strong>{bootstrap?.waitingPlayers.length ?? 0} na fila</strong></div>
             <div className="metric"><svg viewBox="0 0 24 24"><path d="M12 2 5 9h4v6h6V9h4l-7-7Z"/></svg><strong>{bootstrap?.onlinePlayers.length ?? 0} jogadores online</strong></div>
             <div className="tool-buttons admin-tool-buttons">
-              <button className="ranking-button" type="button" onClick={handleRelease} disabled={releaseState === "loading" || resetState === "loading"}>{releaseState === "loading" ? "Liberando..." : "Liberar todos"}</button>
+              <button className="ranking-button" type="button" onClick={handleRelease} disabled={releaseState === "loading" || resetState === "loading"}>{releaseState === "loading" ? "Salvando..." : bootstrap?.gameActive ? "Desativar jogo" : "Ativar jogo"}</button>
               <button className="ranking-button ranking-button--danger" type="button" onClick={handleReset} disabled={resetState === "loading" || releaseState === "loading"}>{resetState === "loading" ? "Resetando..." : "Resetar jogo"}</button>
             </div>
           </div>
